@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 
 namespace OrderService
 {
@@ -9,13 +11,30 @@ namespace OrderService
     {
         private readonly IList<OrderLine> _orderLines = new List<OrderLine>();
 
-        public Order(string company)
-        {
-            Company = company;
-        }
-
+        private readonly DiscountSystem _discountSystem = new DiscountSystem();
+        
         public string Company { get; set; }
 
+        public IList<OrderLine> OrderLines
+        {
+            get { return _orderLines; }
+        }
+        
+        public Order(string company)
+        {
+            _discountSystem.AddDiscountRule(
+                new LogicalRule { OperationType = OperationTypes.Equal, ParameterToCompareWith = Product.Prices.OneThousand},
+                new LogicalRule { OperationType = OperationTypes.GreaterThen, ParameterToCompareWith = 5}, 
+                .9d);
+            
+            _discountSystem.AddDiscountRule(
+                new LogicalRule { OperationType = OperationTypes.Equal, ParameterToCompareWith = Product.Prices.TwoThousand},
+                new LogicalRule { OperationType = OperationTypes.GreaterThen, ParameterToCompareWith = 3}, 
+                .8d);
+            
+            Company = company;
+        }
+        
         public void AddLine(OrderLine orderLine)
         {
             _orderLines.Add(orderLine);
@@ -27,22 +46,7 @@ namespace OrderService
             var result = new StringBuilder($"Order receipt for '{Company}'{Environment.NewLine}");
             foreach (var line in _orderLines)
             {
-                var thisAmount = 0d;
-                switch (line.Product.Price)
-                {
-                    case Product.Prices.OneThousand:
-                        if (line.Quantity >= 5)
-                            thisAmount += line.Quantity * line.Product.Price * .9d;
-                        else
-                            thisAmount += line.Quantity * line.Product.Price;
-                        break;
-                    case Product.Prices.TwoThousand:
-                        if (line.Quantity >= 3)
-                            thisAmount += line.Quantity * line.Product.Price * .8d;
-                        else
-                            thisAmount += line.Quantity * line.Product.Price;
-                        break;
-                }
+                var thisAmount = line.Quantity * line.Product.Price * _discountSystem.CalculateDiscount(line.Product.Price, line.Quantity);
 
                 result.AppendLine(
                     $"\t{line.Quantity} x {line.Product.ProductType} {line.Product.ProductName} = {thisAmount:C}");
@@ -65,22 +69,7 @@ namespace OrderService
                 result.Append("<ul>");
                 foreach (var line in _orderLines)
                 {
-                    var thisAmount = 0d;
-                    switch (line.Product.Price)
-                    {
-                        case Product.Prices.OneThousand:
-                            if (line.Quantity >= 5)
-                                thisAmount += line.Quantity * line.Product.Price * .9d;
-                            else
-                                thisAmount += line.Quantity * line.Product.Price;
-                            break;
-                        case Product.Prices.TwoThousand:
-                            if (line.Quantity >= 3)
-                                thisAmount += line.Quantity * line.Product.Price * .8d;
-                            else
-                                thisAmount += line.Quantity * line.Product.Price;
-                            break;
-                    }
+                    var thisAmount = line.Quantity * line.Product.Price * _discountSystem.CalculateDiscount(line.Product.Price, line.Quantity);
 
                     result.Append(
                         $"<li>{line.Quantity} x {line.Product.ProductType} {line.Product.ProductName} = {thisAmount:C}</li>");
@@ -96,6 +85,42 @@ namespace OrderService
             result.Append($"<h2>Total: {totalAmount + totalTax:C}</h2>");
             result.Append("</body></html>");
             return result.ToString();
+        }
+
+        public string GenerateJsonReceiptAlternative1()
+        {
+            return JsonSerializer.Serialize(this);
+        }
+
+        public string GenerateJsonReceiptAlternative2()
+        {
+            var receipt = new Receipt
+            {
+                Header = $"Order receipt for '{Company}'",
+                Specification = new List<string>()
+            };
+            
+            var totalAmount = 0d;
+            foreach (var line in _orderLines)
+            {
+                var thisAmount = line.Quantity * line.Product.Price * _discountSystem.CalculateDiscount(line.Product.Price, line.Quantity);
+
+                receipt.Specification.Add($"{line.Quantity} x {line.Product.ProductType} {line.Product.ProductName} = {thisAmount:C}");
+                totalAmount += thisAmount;
+            }
+
+            var totalTax = totalAmount * Product.Prices.TaxRate;
+            
+            receipt.Subtotal = $"{totalAmount:C}";
+            receipt.MVA = $"{totalTax:C}";
+            receipt.Total = $"{totalAmount + totalTax:C}";
+
+            var options = new JsonSerializerOptions
+            {
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            };
+            
+            return JsonSerializer.Serialize(receipt, options);
         }
     }
 }

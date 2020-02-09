@@ -59,5 +59,27 @@ namespace OrderService.Tests
 
             Assert.AreEqual(expected, actual);
         }
+
+        [Test]
+        public void TestingJsonReceiptGeneration_ReturnsSerializedOrderClass_ShouldPass()
+        {
+            var order = new Order("Test Company");
+            order.AddLine(new OrderLine(MotorSuper, 1));
+            var actual = order.GenerateJsonReceiptAlternative1();
+            var expected = "{\"Company\":\"Test Company\",\"OrderLines\":[{\"Product\":{\"ProductType\":\"Car Insurance\",\"ProductName\":\"Super\",\"Price\":2000},\"Quantity\":1}]}";
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [Test]
+        public void TestingJsonReceiptGeneration_ReturnsSerializedReceiptClass_ShouldPass()
+        {
+            var order = new Order("Test Company");
+            order.AddLine(new OrderLine(MotorSuper, 1));
+            var actual = order.GenerateJsonReceiptAlternative2();
+            var expected = $"{{\"Header\":\"Order receipt for 'Test Company'\",\"Specification\":[\"1 x Car Insurance Super = {2000:C}\"],\"Subtotal\":\"{2000:C}\",\"MVA\":\"{500:C}\",\"Total\":\"{2500:C}\"}}";
+
+            Assert.AreEqual(expected, actual);
+        }
     }
 }

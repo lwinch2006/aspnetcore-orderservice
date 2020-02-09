@@ -9,6 +9,7 @@
         }
 
         public Product Product { get; }
+        
         public int Quantity { get; }
     }
 }
