@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using NUnit.Framework;
 
@@ -17,7 +18,7 @@ namespace OrderService.Tests
             var actual = order.GenerateHtmlReceipt();
 
             var expected =
-                $"<html><body><h1>Order receipt for 'Test Company'</h1><ul><li>1 x Car Insurance Basic = kr 1{NumberFormatInfo.CurrentInfo.NumberGroupSeparator}000,00</li></ul><h3>Subtotal: kr 1{NumberFormatInfo.CurrentInfo.NumberGroupSeparator}000,00</h3><h3>MVA: kr 250,00</h3><h2>Total: kr 1{NumberFormatInfo.CurrentInfo.NumberGroupSeparator}250,00</h2></body></html>";
+                $"<html><body><h1>Order receipt for 'Test Company'</h1><ul><li>1 x Car Insurance Basic = {1000:C}</li></ul><h3>Subtotal: {1000:C}</h3><h3>MVA: {250:C}</h3><h2>Total: {1250:C}</h2></body></html>";
 
             Assert.AreEqual(expected, actual);
         }
@@ -30,7 +31,7 @@ namespace OrderService.Tests
             var actual = order.GenerateHtmlReceipt();
 
             var expected =
-                $"<html><body><h1>Order receipt for 'Test Company'</h1><ul><li>1 x Car Insurance Super = kr 2{NumberFormatInfo.CurrentInfo.NumberGroupSeparator}000,00</li></ul><h3>Subtotal: kr 2{NumberFormatInfo.CurrentInfo.NumberGroupSeparator}000,00</h3><h3>MVA: kr 500,00</h3><h2>Total: kr 2{NumberFormatInfo.CurrentInfo.NumberGroupSeparator}500,00</h2></body></html>";
+                $"<html><body><h1>Order receipt for 'Test Company'</h1><ul><li>1 x Car Insurance Super = {2000:C}</li></ul><h3>Subtotal: {2000:C}</h3><h3>MVA: {500:C}</h3><h2>Total: {2500:C}</h2></body></html>";
 
             Assert.AreEqual(expected, actual);
         }
@@ -42,7 +43,7 @@ namespace OrderService.Tests
             order.AddLine(new OrderLine(MotorBasic, 1));
             var actual = order.GenerateReceipt();
             var expected =
-                $"Order receipt for 'Test Company'\r\n\t1 x Car Insurance Basic = kr 1{NumberFormatInfo.CurrentInfo.NumberGroupSeparator}000,00\r\nSubtotal: kr 1{NumberFormatInfo.CurrentInfo.NumberGroupSeparator}000,00\r\nMVA: kr 250,00\r\nTotal: kr 1{NumberFormatInfo.CurrentInfo.NumberGroupSeparator}250,00";
+                $"Order receipt for 'Test Company'{Environment.NewLine}\t1 x Car Insurance Basic = {1000:C}{Environment.NewLine}Subtotal: {1000:C}{Environment.NewLine}MVA: {250:C}{Environment.NewLine}Total: {1250:C}";
 
             Assert.AreEqual(expected, actual);
         }
@@ -54,7 +55,7 @@ namespace OrderService.Tests
             order.AddLine(new OrderLine(MotorSuper, 1));
             var actual = order.GenerateReceipt();
             var expected =
-                $"Order receipt for 'Test Company'\r\n\t1 x Car Insurance Super = kr 2{NumberFormatInfo.CurrentInfo.NumberGroupSeparator}000,00\r\nSubtotal: kr 2{NumberFormatInfo.CurrentInfo.NumberGroupSeparator}000,00\r\nMVA: kr 500,00\r\nTotal: kr 2{NumberFormatInfo.CurrentInfo.NumberGroupSeparator}500,00";
+                $"Order receipt for 'Test Company'{Environment.NewLine}\t1 x Car Insurance Super = {2000:C}{Environment.NewLine}Subtotal: {2000:C}{Environment.NewLine}MVA: {500:C}{Environment.NewLine}Total: {2500:C}";
 
             Assert.AreEqual(expected, actual);
         }
